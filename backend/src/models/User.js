@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    avatrUrl: {
+    avatarUrl: {
         type: String,
     },
     avatarId: {
