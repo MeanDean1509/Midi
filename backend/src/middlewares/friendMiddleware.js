@@ -65,10 +65,10 @@ export const checkFriendship = async (req, res, next) => {
 export const checkGroupMembership = async (req, res, next) => {
     try {
 
-        const {ConversationId} = req.body;
+        const {conversationId} = req.body;
         const userId = req.user._id;
 
-        const conversation = await Conversation.findById(ConversationId);
+        const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
             return res.status(404).json({ message: 'Conversation not found.' });
         }

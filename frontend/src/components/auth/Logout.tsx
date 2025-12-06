@@ -2,6 +2,7 @@ import React from 'react'
 import { Button } from '../ui/button'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useNavigate } from 'react-router';
+import { LogOut } from 'lucide-react';
 
 const logout = () => {
 
@@ -18,7 +19,10 @@ const logout = () => {
         }
     }
   return (
-    <Button onClick={handleLogout}>Logout</Button>
+    <Button className='cursor-pointer' variant="completeGhost" onClick={handleLogout}>
+      <LogOut className='text-destructive'/>
+      Đăng xuất
+    </Button>
   )
 }
 

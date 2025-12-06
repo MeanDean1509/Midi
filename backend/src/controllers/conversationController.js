@@ -171,3 +171,19 @@ export const getMessages = async (req, res) => {
         
     }
 }
+
+export const getUserConversationsForSocketIO = async (userId) => {
+    try {
+        const conversations = await Conversation.find({
+            'participants.userId': userId
+        },
+        { _id: 1 }
+        );
+
+        return conversations.map(convo => convo._id.toString());
+        
+    } catch (error) {
+        console.error('Error getting conversations for Socket.IO:', error);
+        return [];
+    }
+}
