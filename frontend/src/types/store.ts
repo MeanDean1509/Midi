@@ -64,7 +64,8 @@ export interface ChatState {
 
     //update convwersation
 
-    updateConversation: (conversation: Conversation) => void;
+    updateConversation: (conversation: any) => void;
+    markAsSeen: () => Promise<void>;
 }
 
 export interface SocketState {
@@ -72,4 +73,10 @@ export interface SocketState {
     onlineUsers: string[];
     connectSocket: () => void;
     disconnectSocket: () => void;
+}
+
+export interface FriendState {
+    loading: boolean;
+    searchByUsername: (username: string) => Promise<User | null>;
+    addFriend: (to: string, message?: string) => Promise<string>;
 }

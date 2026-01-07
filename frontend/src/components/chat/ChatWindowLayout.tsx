@@ -1,5 +1,5 @@
 import { useChatStore } from '@/stores/useChatStore';
-import React from 'react'
+import React, { useEffect } from 'react'
 import ChatWelcomeScreen from './ChatWelcomeScreen';
 import ChatWindowSkeleton from './ChatWindowSkeleton';
 import { SidebarInset } from '../ui/sidebar';
@@ -8,10 +8,25 @@ import ChatWinDowBody from './ChatWindowBody';
 import MessageInput from './MessageInput';
 
 const ChatWindowLayout = () => {
-  const {activeConversationId, conversations, messageLoading:loading, messages} = useChatStore();
+  const {activeConversationId, conversations, messageLoading:loading, messages, markAsSeen} = useChatStore();
 
   const selectionConv= conversations.find(convo => convo._id === activeConversationId) ?? null;
   
+  useEffect(() => {
+    if (!selectionConv) return;
+
+    const markSeen = async () => {
+      try {
+        await markAsSeen();
+      } catch (error) {
+        console.error("Failed to mark as seen:", error);
+        
+      }
+    }
+    markSeen();
+
+  }, [selectionConv, markAsSeen]);
+
   if (!selectionConv)
   {
     return <ChatWelcomeScreen />

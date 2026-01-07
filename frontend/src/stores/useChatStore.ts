@@ -64,7 +64,7 @@ export const useChatStore = create<ChatState>()(
             }));
             set((state) => {
                 const prev = state.messages[convId]?.items ?? [];
-                const merged = prev.length > 0 ? [...prev, ...processed] : processed;
+                const merged = prev.length > 0 ? [...processed, ...prev] : processed;
 
                 return {
                     messages: {
@@ -159,13 +159,45 @@ export const useChatStore = create<ChatState>()(
             
         }
     },
-    updateConversation: (conversation) => {
+    updateConversation: (conversation ) => {
         set((state) => ({
             conversations: state.conversations.map((convo) => convo._id === conversation._id ? {
                 ...convo,
                 ...conversation} : convo
             )
         }));
+    },
+    markAsSeen:  async () => {
+        try {
+            const {user} = useAuthStore.getState();
+            const {activeConversationId, conversations} = get();
+
+            if (!activeConversationId || !user) return;
+
+            const convo = conversations.find((c) => c._id === activeConversationId);
+
+            if ((convo?.unreadCounts?.[user._id] ?? 0) === 0) return;
+
+            await chatService.markAsSeen(activeConversationId);
+
+            set((state) => ({
+                conversations: state.conversations.map((c) => c._id === activeConversationId && c.lastMessage ? {
+                    ...c,
+                    unreadCounts: {
+                        ...c.unreadCounts,
+                        [user._id]: 0,
+                    },
+                } : c)
+            }));
+
+
+
+            
+        } catch (error) {
+            console.error("Failed to mark conversation as seen:", error);
+
+            
+        }
     }
 }),
         {

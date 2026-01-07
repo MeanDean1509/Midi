@@ -17,14 +17,24 @@ interface MessageItemProps {
 }
 const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}: MessageItemProps) => {
   
-    const prev = messages[index -1];
-    const isGroupBreak =  index === 0 || 
-    message.senderId !== prev?.senderId ||
+    const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
+
+    const isShowTime = index === 0 ||
     new Date(message.createdAt).getTime() - new Date(prev?.createdAt || 0).getTime() > 300000;
+
+    const isGroupBreak = isShowTime || message.senderId !== prev?.senderId;
     const participant = selectedConv.participants.find(
         (p: Participant) => p._id.toString() === message.senderId.toString()
     );
     return (
+        <>
+        {/* time */}
+            {isShowTime && (
+                <span className='text-xs text-muted-foreground text-center '>
+                    {formatMessageTime(new Date(message.createdAt))}
+                </span>
+
+            )}
     <div className={cn(
         "flex gap-2 messeage-bounce mt-1",
         message.isOwn ? "justify-end" : "justify-start",
@@ -62,13 +72,7 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
 
             </Card>
 
-            {/* time */}
-            {isGroupBreak && (
-                <span className='text-xs text-muted-foreground'>
-                    {formatMessageTime(new Date(message.createdAt))}
-                </span>
-
-            )}
+            
 
             {/* last message status */}
 
@@ -92,6 +96,7 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
         </div>
 
     </div>
+        </>
   )
 }
 
