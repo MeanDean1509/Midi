@@ -81,7 +81,19 @@ export const createConversation = async (req, res) => {
             }
         ]);
 
-        return res.status(201).json({conversation});
+        const participants =  (conversation.participants || []).map((p) =>({
+                _id: p.userId?._id,
+                displayName: p.userId?.displayName,
+                avatarUrl: p.userId?.avatarUrl ?? null,
+                joinedAt: p.joinedAt,
+            }));
+
+        const formatted = {
+            ...conversation.toObject(),
+            participants,
+        };
+
+        return res.status(201).json({conversation: formatted});
 
 
     } catch (error) {
