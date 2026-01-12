@@ -1,6 +1,5 @@
 import { chatService } from "@/services/chatService";
 import type { ChatState } from "@/types/store";
-import { fi } from "zod/v4/locales";
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
 import { useAuthStore } from "./useAuthStore";
@@ -14,6 +13,7 @@ export const useChatStore = create<ChatState>()(
     activeConversationId: null,
     convoLoading: false,
     messageLoading: false,
+    loading: false,
     setActiveConversation: (id) => set({activeConversationId: id}),
     reset: () => {
         set({
@@ -211,6 +211,7 @@ export const useChatStore = create<ChatState>()(
     },
     createConversation: async (type, name, memberIds) => {
         try {
+            set({loading: true});
             const conversation = await chatService.createConversation(type, name, memberIds);
             get().addConvo(conversation);
             useSocketStore.getState().socket?.emit("join-conversation", conversation._id);
@@ -220,6 +221,9 @@ export const useChatStore = create<ChatState>()(
             console.error("Failed to create conversation:", error);
             
             
+        }
+        finally {
+            set({loading: false});
         }
     },
 }),

@@ -3,7 +3,8 @@ import React from 'react'
 import { Card } from '../ui/card';
 import { Dialog, DialogTrigger } from '../ui/dialog';
 import { MessageCircle } from 'lucide-react';
-import FriendListModal from '../createNewChat/friendListModal';
+import FriendListModal from '../createNewChat/FriendListModal';
+
 
 const CreateNewChat = () => {
   const { getFriends } = useFriendStore();

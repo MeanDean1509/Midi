@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { DialogContent, DialogHeader, DialogTitle, DialogClose } from '../ui/dialog';
 import { useFriendStore } from '@/stores/useFriendStore';
 import { MessageCircleMore, Users } from 'lucide-react';
 import { Card } from '../ui/card';
@@ -12,14 +12,6 @@ const FriendListModal = () => {
     const {createConversation} = useChatStore();
 
 
-    // if (friends.length === 0) {
-    //     return (
-    //         <div className='text-center py-8 text-muted-foreground'>
-    //             <Users className='size-12 mx-auto mb-3 opacity-50'></Users>
-    //             Bạn chưa có bạn bè nào. Hãy thêm bạn bè để bắt đầu trò chuyện!
-    //         </div>
-    //     )
-    // }
 
   const handleAddConversation =  async (friendId: string) => {
   
@@ -54,30 +46,31 @@ const FriendListModal = () => {
       // 👇 Friend list
       <div className='space-y-2 max-h-60 overflow-y-auto'>
         {friends.map((friend) => (
-          <Card
-            key={friend._id}
-            className='p-3 cursor-pointer transition-smooth hover:shadow-soft glass hover:bg-muted/30 group/friendCard'
-            onClick={() => handleAddConversation(friend._id)}
-          >
-            <div className='flex items-center gap-3'>
-              <div className='relative'>
-                <UserAvatar
-                  type="sidebar"
-                  name={friend.displayName}
-                  avatarUrl={friend.avatarUrl}
-                />
-              </div>
+          <DialogClose asChild key={friend._id}>
+            <Card
+              className='p-3 cursor-pointer transition-smooth hover:shadow-soft glass hover:bg-muted/30 group/friendCard'
+              onClick={() => handleAddConversation(friend._id)}
+            >
+              <div className='flex items-center gap-3'>
+                <div className='relative'>
+                  <UserAvatar
+                    type="sidebar"
+                    name={friend.displayName}
+                    avatarUrl={friend.avatarUrl}
+                  />
+                </div>
 
-              <div className='flex-1 min-w-0 flex flex-col'>
-                <h2 className='font-semibold text-sm truncate'>
-                  {friend.displayName}
-                </h2>
-                <span className='text-sm text-muted-foreground'>
-                  @{friend.username}
-                </span>
+                <div className='flex-1 min-w-0 flex flex-col'>
+                  <h2 className='font-semibold text-sm truncate'>
+                    {friend.displayName}
+                  </h2>
+                  <span className='text-sm text-muted-foreground'>
+                    @{friend.username}
+                  </span>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </DialogClose>
         ))}
       </div>
     )}

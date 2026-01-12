@@ -93,6 +93,11 @@ export const createConversation = async (req, res) => {
             participants,
         };
 
+        if (type === 'group'){
+                memberIds.forEach(memberId => {
+                    io.to(userId).emit('new-group', formatted);
+            });
+        }
         return res.status(201).json({conversation: formatted});
 
 

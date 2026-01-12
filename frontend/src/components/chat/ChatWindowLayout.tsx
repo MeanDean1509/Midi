@@ -1,14 +1,15 @@
 import { useChatStore } from '@/stores/useChatStore';
 import React, { useEffect } from 'react'
 import ChatWelcomeScreen from './ChatWelcomeScreen';
-import ChatWindowSkeleton from './ChatWindowSkeleton';
+
 import { SidebarInset } from '../ui/sidebar';
 import ChatWindowHeader from './ChatWindowHeader';
 import ChatWinDowBody from './ChatWindowBody';
 import MessageInput from './MessageInput';
+import ChatWindowSkeleton from '../skeleton/ChatWindowSkeleton';
 
 const ChatWindowLayout = () => {
-  const {activeConversationId, conversations, messageLoading:loading, messages, markAsSeen} = useChatStore();
+  const {activeConversationId, conversations, messageLoading: loading, messages, markAsSeen} = useChatStore();
 
   const selectionConv= conversations.find(convo => convo._id === activeConversationId) ?? null;
   

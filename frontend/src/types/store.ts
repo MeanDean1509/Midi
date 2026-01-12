@@ -1,7 +1,6 @@
 import type { Friend, FriendRequest, User } from "./user";
 import type { Conversation, Message } from "./chat";
 import type { Socket } from "socket.io-client";
-import type { P } from "node_modules/react-router/dist/development/router-CAvh_Drx.d.mts";
 
 
 export interface AuthState {
@@ -11,7 +10,8 @@ export interface AuthState {
 
 
     setAccessToken: (accessToken: string ) => void;
-     clearState: () => void;
+    setUser: (user: User) => void;
+    clearState: () => void;
 
     signUp: (username: string, password: string, email: string, firstName: string, lastName: string) => Promise<void>;
 
@@ -42,6 +42,7 @@ export interface ChatState {
     activeConversationId: string | null;
     convoLoading: boolean;
     messageLoading: boolean;
+    loading: boolean;
     reset: () => void;
 
     setActiveConversation: (id: string | null) => void;
@@ -88,4 +89,8 @@ export interface FriendState {
     acceptRequest: (requestId: string) => Promise<void>;
     declineRequest: (requestId: string) => Promise<void>;
     getFriends: () => Promise<void>;
+}
+
+export interface UserState {
+    updateAvatarUrl: (formData: FormData) => Promise<void>;
 }
