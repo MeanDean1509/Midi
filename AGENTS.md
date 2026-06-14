@@ -1,0 +1,158 @@
+# AGENTS.md
+
+Guidance for coding agents working in this repository.
+
+## Project Overview
+
+This is `MIDI Realtime Chat`, a full-stack chat application.
+
+- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar upload, Swagger UI.
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand, React Router, Socket.IO client, shadcn/Radix UI, lucide-react, React Hook Form, Zod, Sonner.
+- Pattern: REST APIs for data changes and reads, Socket.IO for realtime presence/messages/read events.
+
+## Repository Layout
+
+```text
+backend/
+  src/
+    server.js                 Express middleware/routes and startup
+    socket/index.js           shared Express app + HTTP server + Socket.IO
+    libs/db.js                MongoDB connection
+    routes/                   Express route modules
+    controllers/              request handlers and socket helper queries
+    middlewares/              auth, socket auth, friend/membership checks, upload
+    models/                   Mongoose schemas
+    utils/messageHelper.js    conversation update and Socket.IO emit helpers
+    swagger.json              Swagger UI document served at /api-docs
+
+frontend/
+  src/
+    App.tsx                   router, theme setup, socket connect/disconnect
+    main.tsx                  React entry
+    lib/axios.ts              axios instance and refresh-token interceptor
+    services/                 API wrappers
+    stores/                   Zustand stores and async app logic
+    types/                    shared TS interfaces
+    pages/                    route pages
+    components/               chat/auth/sidebar/profile/friend UI
+    components/ui/            shadcn/Radix primitives
+    index.css                 Tailwind v4 imports, CSS variables, utility classes
+```
+
+## Commands
+
+Run commands from the matching package directory unless noted.
+
+- Backend dev: `cd backend && npm run dev`
+- Backend production start: `cd backend && npm start`
+- Backend syntax check: `node --check src/server.js`
+- Frontend dev: `cd frontend && npm run dev`
+- Frontend build/typecheck: `cd frontend && npm run build`
+- Frontend lint: `cd frontend && npm run lint`
+- Frontend preview: `cd frontend && npm run preview`
+
+There are no dedicated automated test scripts in either `package.json` at the time this file was written.
+
+## Environment
+
+Backend expects a `.env` in `backend/`.
+
+- `PORT`
+- `MONGODB_CONECTIONSTRING`
+- `ACCESS_TOKEN_SECRET`
+- `CLIENT_URL`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Note the existing spelling `MONGODB_CONECTIONSTRING` is misspelled but currently used by the code. Do not silently rename it unless updating every dependent environment.
+
+Frontend uses Vite env files in `frontend/`.
+
+- `npm run dev` uses `.env.development`.
+- `npm run build` uses `.env.production`.
+- Required variables: `VITE_API_URL`, `VITE_SOCKET_URL`.
+
+Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
+
+## Backend Conventions
+
+- Backend files are ES modules because `backend/package.json` has `"type": "module"`.
+- Use explicit `.js` extensions in local backend imports.
+- `server.js` imports `{ app, server }` from `src/socket/index.js`; Socket.IO and Express share the same HTTP server.
+- Public routes are mounted before `protectedRoute`: currently `/api/auth`.
+- Private routes are mounted after `app.use(protectedRoute)`: `/api/users`, `/api/friends`, `/api/messages`, `/api/conversations`.
+- `protectedRoute` reads `Authorization: Bearer <accessToken>`, verifies `ACCESS_TOKEN_SECRET`, loads the user, and assigns `req.user`.
+- Socket auth reads `socket.handshake.auth.token`, verifies it, loads the user, and assigns `socket.user`.
+- Refresh tokens are opaque random tokens stored in `Session` and sent as an httpOnly cookie named `refreshToken`.
+- Direct/group conversation creation and message sending rely on friend/membership middlewares. Keep these checks in place for new message/conversation endpoints.
+- Message writes should use `updateConversationAfterCreateMessage` and `emitNewMessage` so unread counts, last message, and rooms stay consistent.
+- Socket events currently used by the frontend: `online-users`, `new-message`, `read-message`, `new-group`, and client-emitted `join-conversation`.
+- Friend pairs are normalized with sorted user IDs. Preserve this invariant when changing friendship logic.
+
+## Frontend Conventions
+
+- Use the `@/*` alias for imports from `frontend/src`.
+- Business/network flow is usually: component -> Zustand store -> service -> `lib/axios.ts`.
+- Keep API calls in `src/services/*`; keep state transitions and toast side effects in `src/stores/*` unless a file already has a local pattern.
+- Auth state lives in `useAuthStore`; only `user` is persisted under `auth-storage`, while `accessToken` is in memory and refreshed from the cookie.
+- Chat state lives in `useChatStore`; conversations are persisted under `chat-storage`, while messages are stored by conversation ID.
+- Socket lifecycle lives in `useSocketStore` and is connected from `App.tsx` when an access token exists.
+- Use existing type definitions from `src/types/user.ts`, `src/types/chat.ts`, and `src/types/store.ts`; update them when API shapes change.
+- UI primitives are shadcn/Radix-style components under `src/components/ui`. Prefer extending existing variants/classes over introducing a second component system.
+- Icons are from `lucide-react`.
+- Styling uses Tailwind plus CSS variables/utilities in `src/index.css`, including `glass`, `glass-strong`, `bg-gradient-chat`, `transition-smooth`, `beautiful-scrollbar`, `chat-bubble-*`, and status classes.
+- The app currently uses `react-router` imports, not `react-router-dom`.
+
+## Feature Workflows
+
+When adding a new authenticated REST feature:
+
+1. Add or update a Mongoose model if data shape changes.
+2. Add controller logic in `backend/src/controllers`.
+3. Add route wiring in `backend/src/routes`.
+4. Mount the route in `backend/src/server.js` after `protectedRoute` if it is private.
+5. Add/update a frontend service in `frontend/src/services`.
+6. Add/update Zustand store state/actions in `frontend/src/stores`.
+7. Update frontend types in `frontend/src/types`.
+8. Update the component/page that consumes the feature.
+
+When adding realtime behavior:
+
+1. Decide the room: user ID room or conversation ID room.
+2. Emit from backend using the shared `io` from `backend/src/socket/index.js`.
+3. Add or update listeners in `frontend/src/stores/useSocketStore.ts`.
+4. Update `useChatStore` or another store rather than putting large socket state transitions in components.
+
+## Current Sharp Edges
+
+Be careful around these existing issues and conventions:
+
+- Some Vietnamese UI strings appear mojibake-encoded in source files. Do not reformat entire files or rewrite unrelated strings unless the task is specifically to fix encoding/text.
+- Frontend TypeScript is strict with `noUnusedLocals` and `noUnusedParameters`; unused imports such as accidental auto-imports will break `npm run build`.
+- `authService` has an existing method named `singIn`, and callers use that spelling. Rename only with coordinated updates.
+- `server.js` reads Swagger JSON with a relative path `./src/swagger.json`; running backend commands from outside `backend/` can affect that path.
+- Cookie settings in `signIn` use `secure: true` and `sameSite: 'none'`, which is production/CORS-sensitive.
+- Existing indexes include typos in some schemas, for example `participant.userId` and `conversasionId`. Treat index fixes as migrations, not casual cleanup.
+- `fix-friend-index.js` is a one-off migration helper for old friend indexes.
+- Do not remove `withCredentials: true` from axios/auth requests unless replacing the refresh-token flow.
+- Do not change `MONGODB_CONECTIONSTRING` spelling without an explicit migration plan.
+
+## Verification Guidance
+
+For backend-only changes:
+
+- Run `node --check` on changed backend files and `src/server.js`.
+- If behavior changed, start backend with `npm run dev` and exercise the relevant route manually.
+
+For frontend changes:
+
+- Run `npm run build` to typecheck and build.
+- Run `npm run lint` for lint coverage.
+- If UI behavior changed, run `npm run dev` and verify the route visually.
+
+For full-stack changes:
+
+- Verify backend CORS `CLIENT_URL` matches the frontend origin.
+- Verify frontend `VITE_API_URL` and `VITE_SOCKET_URL` point to the intended backend.
+- Check both REST behavior and relevant Socket.IO events.

@@ -1,6 +1,5 @@
 import { cn, formatMessageTime } from '@/lib/utils'
 import type { Conversation, Message, Participant } from '@/types/chat'
-import React from 'react'
 import UserAvatar from './UserAvatar'
 import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
@@ -67,7 +66,17 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
             "chat-bubble-received border-0"
             )}> 
 
-            <p className='text-sm leading-relaxed break-words'>{message.content}   </p>
+            {message.imgUrl && (
+                <img
+                    src={message.imgUrl}
+                    alt='Message attachment'
+                    className='max-h-72 max-w-full rounded-md object-cover'
+                />
+            )}
+
+            {message.content && (
+                <p className='text-sm leading-relaxed break-words'>{message.content}</p>
+            )}
 
 
             </Card>

@@ -1,20 +1,48 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
+import { uploadImageFromBuffer } from '../middlewares/uploadMiddleware.js';
 import { emitNewMessage, updateConversationAfterCreateMessage } from '../utils/messageHelper.js';
 import { io } from '../socket/index.js';
+
+export const uploadMessageImage = async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        if (!file.mimetype?.startsWith('image/')) {
+            return res.status(400).json({ message: 'Only image uploads are allowed' });
+        }
+
+        const result = await uploadImageFromBuffer(file.buffer, {
+            folder: 'midi_app/messages',
+            transformation: [{ width: 1280, height: 1280, crop: 'limit' }],
+        });
+
+        return res.status(200).json({
+            imgUrl: result.secure_url,
+            imgId: result.public_id,
+        });
+    } catch (error) {
+        console.error('Error uploading message image:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 export const sendDirectMessage = async(req, res) => {
 
     try {
 
-        const { recipientId, content, conversationId } = req.body;
+        const { recipientId, content, imgUrl, conversationId } = req.body;
 
         const senderId = req.user.id;
 
         let conversation;
 
-        if (!content){
-            return res.status(400).json({ message: 'Message content cannot be empty' });
+        if (!content && !imgUrl){
+            return res.status(400).json({ message: 'Message content or image is required' });
         }
 
         if (conversationId) {
@@ -38,6 +66,7 @@ export const sendDirectMessage = async(req, res) => {
             conversationId: conversation._id,
             senderId,
             content,
+            imgUrl,
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -62,18 +91,19 @@ export const sendDirectMessage = async(req, res) => {
 
 export const sendGroupMessage = async(req, res) => {
     try {
-        const {conversationId, content} = req.body;
+        const {conversationId, content, imgUrl} = req.body;
         const senderId = req.user.id;
         const conversation =  req.conversation;
 
-        if (!content){
-            return res.status(400).json({ message: 'Message content cannot be empty' });
+        if (!content && !imgUrl){
+            return res.status(400).json({ message: 'Message content or image is required' });
         }
 
         const message = await Message.create({
             conversationId: conversation._id,
             senderId,
             content,
+            imgUrl,
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);

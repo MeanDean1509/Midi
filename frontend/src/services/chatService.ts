@@ -42,6 +42,15 @@ export const chatService = {
         return res.data.message;
     },
 
+    async uploadMessageImage(formData: FormData){
+        const res = await api.post("/messages/upload-image", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return res.data.imgUrl as string;
+    },
+
     async markAsSeen(conversationId: string){
         const res = await api.patch(`/conversations/${conversationId}/seen`);
         return res.data;

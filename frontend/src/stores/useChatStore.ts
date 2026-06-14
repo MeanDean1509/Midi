@@ -119,6 +119,17 @@ export const useChatStore = create<ChatState>()(
             
         }
     },
+    uploadMessageImage: async (formData) => {
+        try {
+            set({loading: true});
+            return await chatService.uploadMessageImage(formData);
+        } catch (error) {
+            console.error("Failed to upload message image:", error);
+            throw error;
+        } finally {
+            set({loading: false});
+        }
+    },
     addMessage: async (message) => {
         try {
             const {user} = useAuthStore.getState();

@@ -2,7 +2,6 @@ import express from 'express';
 import { refreshToken, signUp } from '../controllers/authController.js';
 import { signIn } from '../controllers/authController.js';
 import { signOut } from '../controllers/authController.js';
-import { ref } from 'process';
 
 
 const router = express.Router();

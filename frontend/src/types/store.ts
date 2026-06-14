@@ -60,6 +60,8 @@ export interface ChatState {
         content?: string,
         imgUrl?: string,
     ) => Promise<void>;
+
+    uploadMessageImage: (formData: FormData) => Promise<string>;
     // add message
     addMessage: (message: Message) => Promise<void>;
 
