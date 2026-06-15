@@ -12,6 +12,32 @@ export const userService = {
         }
         return res.data;
     },
-            
-
+    updateProfile: async (profileData: { displayName: string; username: string; phone?: string; bio?: string }) => {
+        const res = await api.put('/users/update', profileData);
+        if (res.status === 400) {
+            throw new Error(res.data.message);
+        }
+        return res.data;
+    },
+    updatePreferences: async (preferences: { showOnlineStatus: boolean }) => {
+        const res = await api.put('/users/preferences', preferences);
+        if (res.status === 400) {
+            throw new Error(res.data.message);
+        }
+        return res.data;
+    },
+    changePassword: async (currentPassword: string, newPassword: string) => {
+        const res = await api.put('/users/change-password', { currentPassword, newPassword });
+        if (res.status === 400) {
+            throw new Error(res.data.message);
+        }
+        return res.data;
+    },
+    deleteAccount: async (password: string) => {
+        const res = await api.delete('/users/delete-account', { data: { password } });
+        if (res.status === 400) {
+            throw new Error(res.data.message);
+        }
+        return res.data;
+    },
 };

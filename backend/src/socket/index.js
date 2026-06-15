@@ -19,12 +19,48 @@ io.use(socketAuthMiddleware);
 
 const onlineUsers = new Map();
 
+const broadcastOnlineUsers = () => {
+    const visibleOnlineUserIds = [];
+    for (const [userId, info] of onlineUsers.entries()) {
+        if (info.showOnlineStatus) {
+            visibleOnlineUserIds.push(userId);
+        }
+    }
+
+    io.sockets.sockets.forEach((socket) => {
+        const socketUserId = socket.user?._id?.toString();
+        if (!socketUserId) return;
+
+        const socketUserInfo = onlineUsers.get(socketUserId);
+        if (socketUserInfo && socketUserInfo.showOnlineStatus) {
+            socket.emit('online-users', visibleOnlineUserIds);
+        } else {
+            socket.emit('online-users', []);
+        }
+    });
+};
+
+export const updateOnlineStatusPreference = (userId, showOnlineStatus) => {
+    const userIdStr = userId.toString();
+    if (onlineUsers.has(userIdStr)) {
+        const info = onlineUsers.get(userIdStr);
+        info.showOnlineStatus = showOnlineStatus;
+        onlineUsers.set(userIdStr, info);
+    }
+    broadcastOnlineUsers();
+};
+
 io.on('connection', async (socket) => {
     const user = socket.user;
+    const userIdStr = user._id.toString();
     console.log(`${user.displayName} Socket connected: ${socket.id}`);
-    onlineUsers.set(user._id, socket.id);
+    
+    onlineUsers.set(userIdStr, {
+        socketId: socket.id,
+        showOnlineStatus: user.showOnlineStatus !== false
+    });
 
-    io.emit('online-users', Array.from(onlineUsers.keys()));
+    broadcastOnlineUsers();
 
     const conversationIds = await getUserConversationsForSocketIO(user._id);
     conversationIds.forEach(conversationId =>
@@ -35,10 +71,10 @@ io.on('connection', async (socket) => {
         socket.join(conversationId);
     });
 
-    socket.join(user._id.toString());
+    socket.join(userIdStr);
     socket.on('disconnect', () => {
-        onlineUsers.delete(user._id);
-        io.emit('online-users', Array.from(onlineUsers.keys()));
+        onlineUsers.delete(userIdStr);
+        broadcastOnlineUsers();
         console.log(`Socket disconnected: ${socket.id}`);
     });
 });

@@ -67,6 +67,9 @@ export interface ChatState {
 
     //update convwersation
 
+
+    //update convwersation
+
     updateConversation: (conversation: any) => void;
     markAsSeen: () => Promise<void>;
     addConvo:(convo: Conversation) => void;
@@ -95,4 +98,8 @@ export interface FriendState {
 
 export interface UserState {
     updateAvatarUrl: (formData: FormData) => Promise<void>;
+    updateProfile: (profileData: { displayName: string; username: string; phone?: string; bio?: string }) => Promise<void>;
+    updateOnlineStatus: (showOnlineStatus: boolean) => Promise<void>;
+    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+    deleteAccount: (password: string) => Promise<void>;
 }
