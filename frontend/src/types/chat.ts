@@ -27,6 +27,14 @@ export interface LastMessage {
   };
 }
 
+export interface MessageFile {
+  url: string;
+  key?: string;
+  name: string;
+  size: number;
+  mimeType: string;
+}
+
 export interface Conversation {
   _id: string;
   type: "direct" | "group";
@@ -50,6 +58,7 @@ export interface Message {
   senderId: string;
   content: string | null;
   imgUrl?: string | null;
+  file?: MessageFile | null;
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;

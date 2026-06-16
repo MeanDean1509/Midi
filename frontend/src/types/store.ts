@@ -1,5 +1,5 @@
 import type { Friend, FriendRequest, User } from "./user";
-import type { Conversation, Message } from "./chat";
+import type { Conversation, Message, MessageFile } from "./chat";
 import type { Socket } from "socket.io-client";
 
 
@@ -52,6 +52,7 @@ export interface ChatState {
         recipientId: string,
         content?: string,
         imgUrl?: string,
+        file?: MessageFile,
 
     ) => Promise<void>;
 
@@ -59,9 +60,11 @@ export interface ChatState {
         conversationId: string,
         content?: string,
         imgUrl?: string,
+        file?: MessageFile,
     ) => Promise<void>;
 
     uploadMessageImage: (formData: FormData) => Promise<string>;
+    uploadMessageFile: (formData: FormData) => Promise<MessageFile>;
     // add message
     addMessage: (message: Message) => Promise<void>;
 

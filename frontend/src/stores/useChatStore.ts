@@ -92,10 +92,10 @@ export const useChatStore = create<ChatState>()(
     },
 
 
-    sendDirectMessage: async (recipientId, content="", imgUrl) => {
+    sendDirectMessage: async (recipientId, content="", imgUrl, file) => {
         try {
             const {activeConversationId} = get();
-            await chatService.sendDirectMessage(recipientId, content, imgUrl, activeConversationId || undefined);
+            await chatService.sendDirectMessage(recipientId, content, imgUrl, file, activeConversationId || undefined);
             set((state)=> ({
                 conversations: state.conversations.map((convo) =>  convo._id === activeConversationId ? {...convo, seenBy:[]} : convo)
             }));
@@ -106,9 +106,9 @@ export const useChatStore = create<ChatState>()(
             
         }
     },
-    sendGroupMessage: async (conversationId, content, imgUrl) => {
+    sendGroupMessage: async (conversationId, content, imgUrl, file) => {
         try {
-            await chatService.sendGroupMessage(conversationId, content, imgUrl);
+            await chatService.sendGroupMessage(conversationId, content, imgUrl, file);
             set((state)=> ({
                 conversations: state.conversations.map((convo) =>  convo._id === get().activeConversationId ? {...convo, seenBy:[]} : convo)
                 
@@ -125,6 +125,17 @@ export const useChatStore = create<ChatState>()(
             return await chatService.uploadMessageImage(formData);
         } catch (error) {
             console.error("Failed to upload message image:", error);
+            throw error;
+        } finally {
+            set({loading: false});
+        }
+    },
+    uploadMessageFile: async (formData) => {
+        try {
+            set({loading: true});
+            return await chatService.uploadMessageFile(formData);
+        } catch (error) {
+            console.error("Failed to upload message file:", error);
             throw error;
         } finally {
             set({loading: false});

@@ -1,5 +1,5 @@
 import api from "@/lib/axios"
-import type { ConversationResponse, Message } from "@/types/chat"
+import type { ConversationResponse, Message, MessageFile } from "@/types/chat"
 
 
 interface FetchMessagesProps {
@@ -22,22 +22,24 @@ export const chatService = {
         return {messages: res.data.messages, cursor: res.data.nextCursor};
     },
 
-    async sendDirectMessage(recipientId: string, content: string ="", imgUrl ?: string, conversationId ?: string){
+    async sendDirectMessage(recipientId: string, content: string ="", imgUrl ?: string, file?: MessageFile, conversationId ?: string){
         const res = await api.post("/messages/direct", {
             recipientId,
             content,
             imgUrl,
+            file,
             conversationId
         });
 
         return res.data.message;
     },
 
-   async sendGroupMessage(conversationId: string, content: string ="", imgUrl?: string){
+   async sendGroupMessage(conversationId: string, content: string ="", imgUrl?: string, file?: MessageFile){
         const res = await api.post("/messages/group", {
             conversationId,
             content,
-            imgUrl
+            imgUrl,
+            file
         });
         return res.data.message;
     },
@@ -49,6 +51,15 @@ export const chatService = {
             },
         });
         return res.data.imgUrl as string;
+    },
+
+    async uploadMessageFile(formData: FormData){
+        const res = await api.post("/messages/upload-file", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return res.data.file as MessageFile;
     },
 
     async markAsSeen(conversationId: string){

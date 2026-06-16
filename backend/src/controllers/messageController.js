@@ -1,6 +1,7 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import { uploadImageFromBuffer } from '../middlewares/uploadMiddleware.js';
+import { uploadFileToSupabaseS3 } from '../libs/supabaseS3.js';
 import { emitNewMessage, updateConversationAfterCreateMessage } from '../utils/messageHelper.js';
 import { io } from '../socket/index.js';
 
@@ -31,18 +32,51 @@ export const uploadMessageImage = async (req, res) => {
     }
 };
 
+export const uploadMessageFile = async (req, res) => {
+    try {
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        if (file.mimetype?.startsWith('image/')) {
+            return res.status(400).json({ message: 'Please use image upload for image files' });
+        }
+
+        const result = await uploadFileToSupabaseS3({
+            buffer: file.buffer,
+            originalName: file.originalname,
+            mimetype: file.mimetype,
+        });
+
+        return res.status(200).json({
+            file: {
+                url: result.url,
+                key: result.key,
+                name: file.originalname,
+                size: file.size,
+                mimeType: file.mimetype,
+            },
+        });
+    } catch (error) {
+        console.error('Error uploading message file:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const sendDirectMessage = async(req, res) => {
 
     try {
 
-        const { recipientId, content, imgUrl, conversationId } = req.body;
+        const { recipientId, content, imgUrl, file, conversationId } = req.body;
 
         const senderId = req.user.id;
 
         let conversation;
 
-        if (!content && !imgUrl){
-            return res.status(400).json({ message: 'Message content or image is required' });
+        if (!content && !imgUrl && !file){
+            return res.status(400).json({ message: 'Message content, image, or file is required' });
         }
 
         if (conversationId) {
@@ -67,6 +101,7 @@ export const sendDirectMessage = async(req, res) => {
             senderId,
             content,
             imgUrl,
+            file,
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -91,12 +126,12 @@ export const sendDirectMessage = async(req, res) => {
 
 export const sendGroupMessage = async(req, res) => {
     try {
-        const {conversationId, content, imgUrl} = req.body;
+        const {conversationId, content, imgUrl, file} = req.body;
         const senderId = req.user.id;
         const conversation =  req.conversation;
 
-        if (!content && !imgUrl){
-            return res.status(400).json({ message: 'Message content or image is required' });
+        if (!content && !imgUrl && !file){
+            return res.status(400).json({ message: 'Message content, image, or file is required' });
         }
 
         const message = await Message.create({
@@ -104,6 +139,7 @@ export const sendGroupMessage = async(req, res) => {
             senderId,
             content,
             imgUrl,
+            file,
         });
 
         updateConversationAfterCreateMessage(conversation, message, senderId);

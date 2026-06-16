@@ -4,7 +4,7 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
         lastMessageAt: message.createdAt,
         lastMessage: {
             _id: message._id,
-            content: message.content || (message.imgUrl ? 'Image' : ''),
+            content: message.content || (message.imgUrl ? 'Image' : message.file?.name ? `File: ${message.file.name}` : ''),
             senderId: senderId,
             createdAt: message.createdAt,
         }

@@ -5,6 +5,7 @@ import UserAvatar from './UserAvatar'
 import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog'
+import { Download, FileText } from 'lucide-react'
 
 interface MessageItemProps {
     message: Message
@@ -50,6 +51,13 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
             }
             return part;
         });
+    };
+
+    const formatFileSize = (size?: number) => {
+        if (!size) return '';
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
     };
 
     return (
@@ -112,6 +120,31 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
                         />
                     </DialogContent>
                 </Dialog>
+            )}
+
+            {message.file && (
+                <a
+                    href={message.file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={message.file.name}
+                    className={cn(
+                        "flex min-w-0 items-center gap-3 rounded-md border p-3 transition-colors hover:bg-background/30",
+                        message.isOwn ? "border-white/20 text-white" : "border-border text-foreground"
+                    )}
+                >
+                    <FileText className='size-6 shrink-0' />
+                    <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-semibold'>{message.file.name}</p>
+                        <p className={cn(
+                            "text-xs",
+                            message.isOwn ? "text-white/75" : "text-muted-foreground"
+                        )}>
+                            {formatFileSize(message.file.size)}
+                        </p>
+                    </div>
+                    <Download className='size-4 shrink-0' />
+                </a>
             )}
 
             {message.content && (
