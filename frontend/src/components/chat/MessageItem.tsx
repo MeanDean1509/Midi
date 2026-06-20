@@ -89,12 +89,15 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
         {/* message */}
         <div
         className={cn(
-            "max-w-xs lg:max-w-md space-y-1 flex flex-col",
+            "max-w-[75%] sm:max-w-xs lg:max-w-md space-y-1 flex flex-col min-w-0",
+            message.file && "w-72 max-w-full",
             message.isOwn ? "items-end" : "items-start"
         )
         }>
 
-            <Card className={cn("p-3", message.isOwn ? 
+            <Card className={cn("p-3 min-w-0", 
+            message.file && "w-full",
+            message.isOwn ? 
             "chat-bubble-sent border-0" :
             "chat-bubble-received border-0"
             )}> 
@@ -129,7 +132,7 @@ const MessageItem = ({message, index, messages, selectedConv, lastMessageStatus}
                     rel="noopener noreferrer"
                     download={message.file.name}
                     className={cn(
-                        "flex min-w-0 items-center gap-3 rounded-md border p-3 transition-colors hover:bg-background/30",
+                        "flex min-w-0 w-full items-center gap-3 rounded-md border p-3 transition-colors hover:bg-background/30",
                         message.isOwn ? "border-white/20 text-white" : "border-border text-foreground"
                     )}
                 >

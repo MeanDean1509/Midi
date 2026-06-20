@@ -259,7 +259,7 @@ const MessageInput = ({ selectedConv }: { selectedConv: Conversation }) => {
           {selectedFiles.map((attachment) => (
             <div
               key={attachment.id}
-              className='relative flex max-w-64 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2'
+              className='relative flex max-w-64 min-w-0 items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2'
             >
               <FileText className='size-5 shrink-0 text-primary' />
               <div className='min-w-0'>

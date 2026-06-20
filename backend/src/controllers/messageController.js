@@ -44,9 +44,11 @@ export const uploadMessageFile = async (req, res) => {
             return res.status(400).json({ message: 'Please use image upload for image files' });
         }
 
+        const decodedOriginalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
         const result = await uploadFileToSupabaseS3({
             buffer: file.buffer,
-            originalName: file.originalname,
+            originalName: decodedOriginalName,
             mimetype: file.mimetype,
         });
 
@@ -54,7 +56,7 @@ export const uploadMessageFile = async (req, res) => {
             file: {
                 url: result.url,
                 key: result.key,
-                name: file.originalname,
+                name: decodedOriginalName,
                 size: file.size,
                 mimeType: file.mimetype,
             },

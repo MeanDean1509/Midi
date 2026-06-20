@@ -6,7 +6,7 @@ Guidance for coding agents working in this repository.
 
 This is `MIDI Realtime Chat`, a full-stack chat application.
 
-- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar upload, Swagger UI.
+- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar/image upload, Supabase S3 file upload, Swagger UI.
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand, React Router, Socket.IO client, shadcn/Radix UI, lucide-react, React Hook Form, Zod, Sonner.
 - Pattern: REST APIs for data changes and reads, Socket.IO for realtime presence/messages/read events.
 
@@ -17,11 +17,11 @@ backend/
   src/
     server.js                 Express middleware/routes and startup
     socket/index.js           shared Express app + HTTP server + Socket.IO
-    libs/db.js                MongoDB connection
-    routes/                   Express route modules
-    controllers/              request handlers and socket helper queries
-    middlewares/              auth, socket auth, friend/membership checks, upload
-    models/                   Mongoose schemas
+    libs/                     MongoDB connection (db.js) and Supabase S3 helper (supabaseS3.js)
+    routes/                   Express route modules (authRoute.js, conversationRoute.js, friendRoute.js, messageRoute.js, userRoute.js)
+    controllers/              request handlers and socket helper queries (auth, conversation, friend, message, user controllers)
+    middlewares/              auth, socket auth, friend/membership checks, upload (Cloudinary/multer)
+    models/                   Mongoose schemas (User, Session, Friend, FriendRequest, Message, Conversation)
     utils/messageHelper.js    conversation update and Socket.IO emit helpers
     swagger.json              Swagger UI document served at /api-docs
 
@@ -29,12 +29,13 @@ frontend/
   src/
     App.tsx                   router, theme setup, socket connect/disconnect
     main.tsx                  React entry
-    lib/axios.ts              axios instance and refresh-token interceptor
-    services/                 API wrappers
-    stores/                   Zustand stores and async app logic
-    types/                    shared TS interfaces
-    pages/                    route pages
-    components/               chat/auth/sidebar/profile/friend UI
+    lib/                      axios instance/interceptors (axios.ts) and classname helper (utils.ts)
+    hooks/                    custom react hooks (use-mobile.ts for layout check)
+    services/                 API wrappers (authService.ts, chatService.ts, friendService.ts, userService.ts)
+    stores/                   Zustand stores (useAuthStore, useChatStore, useFriendStore, useSocketStore, useThemeStore, useUserStore)
+    types/                    shared TS interfaces (chat.ts, store.ts, user.ts)
+    pages/                    route pages (SignInPage.tsx, SignUpPage.tsx, ChatAppPage.tsx)
+    components/               chat/auth/sidebar/profile/friend UI components
     components/ui/            shadcn/Radix primitives
     index.css                 Tailwind v4 imports, CSS variables, utility classes
 ```
@@ -64,6 +65,12 @@ Backend expects a `.env` in `backend/`.
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `PUBLIC_SUPABASE_URL`
+- `SUPABASE_S3_STORAGE_URL`
+- `SUPABASE_S3_ACCESS_KEY`
+- `SUPABASE_S3_SECRET_KEY`
+- `SUPABASE_S3_BUCKET_NAME`
+- `SUPABASE_S3_REGION`
 
 Note the existing spelling `MONGODB_CONECTIONSTRING` is misspelled but currently used by the code. Do not silently rename it unless updating every dependent environment.
 
@@ -85,10 +92,13 @@ Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 - `protectedRoute` reads `Authorization: Bearer <accessToken>`, verifies `ACCESS_TOKEN_SECRET`, loads the user, and assigns `req.user`.
 - Socket auth reads `socket.handshake.auth.token`, verifies it, loads the user, and assigns `socket.user`.
 - Refresh tokens are opaque random tokens stored in `Session` and sent as an httpOnly cookie named `refreshToken`.
+- Avatar uploads use Cloudinary and are uploaded via `uploadImageFromBuffer` in `uploadMiddleware.js` (under `midi_app/avatars`).
+- Message images are also uploaded to Cloudinary (under `midi_app/messages`), whereas non-image attachments are uploaded to Supabase S3 via `uploadFileToSupabaseS3` in `supabaseS3.js`.
 - Direct/group conversation creation and message sending rely on friend/membership middlewares. Keep these checks in place for new message/conversation endpoints.
 - Message writes should use `updateConversationAfterCreateMessage` and `emitNewMessage` so unread counts, last message, and rooms stay consistent.
 - Socket events currently used by the frontend: `online-users`, `new-message`, `read-message`, `new-group`, and client-emitted `join-conversation`.
 - Friend pairs are normalized with sorted user IDs. Preserve this invariant when changing friendship logic.
+- Dynamic imports like `const { updateOnlineStatusPreference } = await import('../socket/index.js')` are used to prevent circular dependencies between socket setup and database controllers.
 
 ## Frontend Conventions
 
@@ -98,6 +108,8 @@ Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 - Auth state lives in `useAuthStore`; only `user` is persisted under `auth-storage`, while `accessToken` is in memory and refreshed from the cookie.
 - Chat state lives in `useChatStore`; conversations are persisted under `chat-storage`, while messages are stored by conversation ID.
 - Socket lifecycle lives in `useSocketStore` and is connected from `App.tsx` when an access token exists.
+- Friend/relationship state lives in `useFriendStore` and user profiles/preferences live in `useUserStore`.
+- Theme state (dark/light mode) is managed by `useThemeStore` and persisted under `theme-storage`.
 - Use existing type definitions from `src/types/user.ts`, `src/types/chat.ts`, and `src/types/store.ts`; update them when API shapes change.
 - UI primitives are shadcn/Radix-style components under `src/components/ui`. Prefer extending existing variants/classes over introducing a second component system.
 - Icons are from `lucide-react`.
