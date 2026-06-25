@@ -3,6 +3,8 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
+import { sendResetPasswordEmail } from '../utils/emailHelper.js';
+
 
 
 const ACCESS_TOKEN_TTL = '30m';
@@ -145,3 +147,73 @@ export const refreshToken = async (req, res) => {
         
     }
 };
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ message: "User not found with this email" });
+        }
+
+        // Generate 6-digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        user.resetPasswordCode = otpCode;
+        user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        await user.save();
+
+        try {
+            await sendResetPasswordEmail(user.email, otpCode);
+        } catch (mailError) {
+            console.error("Error sending reset password email:", mailError);
+            return res.status(500).json({ message: "Failed to send verification email" });
+        }
+
+        return res.status(200).json({ message: "Verification code sent to your email" });
+    } catch (error) {
+        console.error("Error in forgotPassword:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, code, newPassword } = req.body;
+
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({ message: "Email, code, and new password are required" });
+        }
+
+        const user = await User.findOne({
+            email: email.toLowerCase(),
+            resetPasswordCode: code,
+            resetPasswordExpires: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired verification code" });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.hashedPassword = hashedPassword;
+        user.resetPasswordCode = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        // Delete all sessions for the user to force re-login
+        await Session.deleteMany({ userId: user._id });
+
+        return res.status(200).json({ message: "Password reset successful" });
+    } catch (error) {
+        console.error("Error in resetPassword:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};

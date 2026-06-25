@@ -65,7 +65,12 @@ export function SigninForm({
 
                 {/* password */}
                 <div className="flex flex-col gap-3">
-                  <Label htmlFor="password" className="block text-sm">Mật khẩu</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="block text-sm">Mật khẩu</Label>
+                    <a href="/forgot-password" className="text-xs text-muted-foreground hover:underline hover:text-primary transition-colors">
+                      Quên mật khẩu?
+                    </a>
+                  </div>
                   <Input id="password"
                     type="password" 
                     {...register("password")} />

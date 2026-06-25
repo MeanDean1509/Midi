@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema({
     showOnlineStatus: {
         type: Boolean,
         default: true
+    },
+    resetPasswordCode: {
+        type: String,
+        default: null
+    },
+    resetPasswordExpires: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

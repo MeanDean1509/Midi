@@ -1,11 +1,12 @@
 import { BrowserRouter, Route, Routes} from 'react-router';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ChatAppPage from './pages/ChatAppPage';
 import { Toaster } from 'sonner';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { useThemeStore } from './stores/useThemeStore';
-import { use, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuthStore } from './stores/useAuthStore';
 import { useSocketStore } from './stores/useSocketStore';
 
@@ -42,6 +43,10 @@ function App() {
         <Route
           path="/signup"
           element={<SignUpPage/>}
+        />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPasswordPage/>}
         />
   
         {/* private root */}

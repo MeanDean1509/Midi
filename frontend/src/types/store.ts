@@ -22,6 +22,8 @@ export interface AuthState {
     fetchMe: () => Promise<void>;
 
     refresh: () => Promise<void>;
+    forgotPassword: (email: string) => Promise<void>;
+    resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
 
 
 }

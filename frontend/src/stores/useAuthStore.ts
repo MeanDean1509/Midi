@@ -1,6 +1,5 @@
 import {create} from "zustand"
 import {toast} from "sonner"
-import { fi } from "zod/v4/locales"
 import { authService } from "@/services/authService";
 import type { AuthState } from "@/types/store";
 import { persist } from "zustand/middleware";
@@ -110,6 +109,36 @@ export const useAuthStore = create<AuthState>()(
         }
         finally {
             set({loading: false});
+        }
+    },
+
+    forgotPassword: async (email) => {
+        try {
+            set({ loading: true });
+            await authService.forgotPassword(email);
+            toast.success("Mã xác thực đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.");
+        } catch (error: any) {
+            console.log(error);
+            const errMsg = error.response?.data?.message || "Không thể gửi email xác thực. Vui lòng thử lại.";
+            toast.error(errMsg);
+            throw error;
+        } finally {
+            set({ loading: false });
+        }
+    },
+
+    resetPassword: async (email, code, newPassword) => {
+        try {
+            set({ loading: true });
+            await authService.resetPassword(email, code, newPassword);
+            toast.success("Khôi phục mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.");
+        } catch (error: any) {
+            console.log(error);
+            const errMsg = error.response?.data?.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại.";
+            toast.error(errMsg);
+            throw error;
+        } finally {
+            set({ loading: false });
         }
     }
 }),
