@@ -173,6 +173,7 @@ export const forgotPassword = async (req, res) => {
         } catch (mailError) {
             console.error("Error sending reset password email:", {
                 message: mailError.message,
+                status: mailError.status,
                 code: mailError.code,
                 command: mailError.command,
                 responseCode: mailError.responseCode,

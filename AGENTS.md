@@ -6,7 +6,7 @@ Guidance for coding agents working in this repository.
 
 This is `MIDI Realtime Chat`, a full-stack chat application.
 
-- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar/image upload, Supabase S3 file upload, Nodemailer password reset email, Swagger UI.
+- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar/image upload, Supabase S3 file upload, Resend password reset email, Swagger UI.
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand, React Router 7, Socket.IO client, shadcn/Radix UI, lucide-react, React Hook Form, Zod, Sonner, Emoji Mart, infinite scroll.
 - Pattern: REST APIs for data changes and reads, Socket.IO for realtime presence/messages/read events.
 
@@ -23,7 +23,7 @@ backend/
     middlewares/              auth, socket auth, friend/membership checks, upload (Cloudinary/multer)
     models/                   Mongoose schemas (User, Session, Friend, FriendRequest, Message, Conversation)
     utils/messageHelper.js    conversation update and Socket.IO emit helpers
-    utils/emailHelper.js      Nodemailer reset-password OTP email helper
+    utils/emailHelper.js      Resend HTTP API reset-password OTP email helper
     swagger.json              Swagger UI document served at /api-docs
 
 frontend/
@@ -72,10 +72,9 @@ Backend expects a `.env` in `backend/`.
 - `SUPABASE_S3_SECRET_KEY`
 - `SUPABASE_S3_BUCKET_NAME`
 - `SUPABASE_S3_REGION`
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USER`
-- `SMTP_PASS`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME` (optional; defaults to `Midi Chat Support`)
 
 Note the existing spelling `MONGODB_CONECTIONSTRING` is misspelled but currently used by the code. Do not silently rename it unless updating every dependent environment.
 
@@ -99,6 +98,7 @@ Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 - Socket auth reads `socket.handshake.auth.token`, verifies it, loads the user, and assigns `socket.user`.
 - Refresh tokens are opaque random tokens stored in `Session` and sent as an httpOnly cookie named `refreshToken`.
 - Forgot-password uses a 6-digit OTP stored on `User.resetPasswordCode` with `resetPasswordExpires`; resetting a password deletes all sessions for that user.
+- Reset-password email is sent through the Resend HTTP API in `emailHelper.js`, not SMTP. Keep it on HTTPS/API-key flow so it works on hosts that block SMTP ports.
 - Avatar uploads use Cloudinary and are uploaded via `uploadImageFromBuffer` in `uploadMiddleware.js` (under `midi_app/avatars`).
 - Message image uploads go through `/api/messages/upload-image` and Cloudinary (under `midi_app/messages`); non-image attachments go through `/api/messages/upload-file` and Supabase S3 via `uploadFileToSupabaseS3` in `supabaseS3.js`.
 - Direct/group conversation creation and message sending rely on friend/membership middlewares. Keep these checks in place for new message/conversation endpoints.
@@ -162,7 +162,7 @@ Be careful around these existing issues and conventions:
 - `fix-friend-index.js` is a one-off migration helper for old friend indexes.
 - Do not remove `withCredentials: true` from axios/auth requests unless replacing the refresh-token flow.
 - Do not change `MONGODB_CONECTIONSTRING` spelling without an explicit migration plan.
-- `emailHelper.js` contains mojibake Vietnamese email text; only fix it intentionally and check the resulting email template.
+- `emailHelper.js` uses Resend env vars and throws response details for provider errors; do not log `RESEND_API_KEY`.
 
 ## Verification Guidance
 
