@@ -63,6 +63,10 @@ export const useAuthStore = create<AuthState>()(
             set({loading: false});
         }
     },
+    signInWithGoogle: () => {
+        get().clearState();
+        window.location.assign(authService.getGoogleAuthUrl());
+    },
     signOut: async () => {
         try {
             get().clearState();

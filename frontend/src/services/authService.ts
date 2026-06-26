@@ -12,6 +12,10 @@ export const authService = {
         return res.data;
     },
 
+    getGoogleAuthUrl: () => {
+        return import.meta.env.VITE_GOOGLE_AUTH_URL || `${import.meta.env.VITE_API_URL}/auth/google`;
+    },
+
     signOut: async () => {
         return api.post('/auth/signout', {},{withCredentials: true});
     },

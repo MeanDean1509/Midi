@@ -22,7 +22,7 @@ export function SigninForm({
     className,
     ...props
     }: React.ComponentProps<"div">) {
-      const {signIn} = useAuthStore();
+      const {signIn, signInWithGoogle} = useAuthStore();
       const navigate = useNavigate();
         const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInFormValues>({
             resolver: zodResolver(signInSchema),
@@ -81,6 +81,23 @@ export function SigninForm({
                   className="w-full cursor-pointer"
                   disabled={isSubmitting}>
                   Đăng nhập
+                </Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">hoặc</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full cursor-pointer"
+                  onClick={signInWithGoogle}
+                  disabled={isSubmitting}>
+                  <img src="/google.png" alt="" className="size-5" />
+                  Tiếp tục với Google
                 </Button>
                 <div className="text-sm text-center">
                   Chưa có tài khoản?{" "}

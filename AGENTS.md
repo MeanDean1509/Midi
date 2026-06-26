@@ -6,7 +6,7 @@ Guidance for coding agents working in this repository.
 
 This is `MIDI Realtime Chat`, a full-stack chat application.
 
-- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, cookie-based refresh tokens, Cloudinary avatar/image upload, Supabase S3 file upload, Resend password reset email, Swagger UI.
+- Backend: Node.js, Express 5, MongoDB/Mongoose, Socket.IO, JWT auth, Google OAuth 2.0, cookie-based refresh tokens, Cloudinary avatar/image upload, Supabase S3 file upload, Resend password reset email, Swagger UI.
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand, React Router 7, Socket.IO client, shadcn/Radix UI, lucide-react, React Hook Form, Zod, Sonner, Emoji Mart, infinite scroll.
 - Pattern: REST APIs for data changes and reads, Socket.IO for realtime presence/messages/read events.
 
@@ -63,6 +63,9 @@ Backend expects a `.env` in `backend/`.
 - `MONGODB_CONECTIONSTRING`
 - `ACCESS_TOKEN_SECRET`
 - `CLIENT_URL`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL`
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
@@ -83,6 +86,7 @@ Frontend uses Vite env files in `frontend/`.
 - `npm run dev` uses `.env.development`.
 - `npm run build` uses `.env.production`.
 - Required variables: `VITE_API_URL`, `VITE_SOCKET_URL`.
+- Optional Google login variable: `VITE_GOOGLE_AUTH_URL` (defaults in code to `${VITE_API_URL}/auth/google`).
 
 Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 
@@ -93,10 +97,11 @@ Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 - `server.js` imports `{ app, server }` from `src/socket/index.js`; Socket.IO and Express share the same HTTP server.
 - Public routes are mounted before `protectedRoute`: currently `/api/auth`.
 - Private routes are mounted after `app.use(protectedRoute)`: `/api/users`, `/api/friends`, `/api/messages`, `/api/conversations`.
-- Auth routes include signup/signin/signout/refresh plus `/forgot-password` and `/reset-password`.
+- Auth routes include signup/signin/signout/refresh, Google OAuth at `/google` and `/google/callback`, plus `/forgot-password` and `/reset-password`.
 - `protectedRoute` reads `Authorization: Bearer <accessToken>`, verifies `ACCESS_TOKEN_SECRET`, loads the user, and assigns `req.user`.
 - Socket auth reads `socket.handshake.auth.token`, verifies it, loads the user, and assigns `socket.user`.
 - Refresh tokens are opaque random tokens stored in `Session` and sent as an httpOnly cookie named `refreshToken`.
+- Google OAuth callback creates or links users by Google profile/email, stores `googleId` on `User`, creates a normal `Session`, sets the same `refreshToken` cookie, then redirects to `CLIENT_URL`.
 - Forgot-password uses a 6-digit OTP stored on `User.resetPasswordCode` with `resetPasswordExpires`; resetting a password deletes all sessions for that user.
 - Reset-password email is sent through the Resend HTTP API in `emailHelper.js`, not SMTP. Keep it on HTTPS/API-key flow so it works on hosts that block SMTP ports.
 - Avatar uploads use Cloudinary and are uploaded via `uploadImageFromBuffer` in `uploadMiddleware.js` (under `midi_app/avatars`).
@@ -115,6 +120,7 @@ Axios uses `VITE_API_URL`; Socket.IO client uses `VITE_SOCKET_URL`.
 - Business/network flow is usually: component -> Zustand store -> service -> `lib/axios.ts`.
 - Keep API calls in `src/services/*`; keep state transitions and toast side effects in `src/stores/*` unless a file already has a local pattern.
 - Auth state lives in `useAuthStore`; only `user` is persisted under `auth-storage`, while `accessToken` is in memory and refreshed from the cookie.
+- Google sign-in starts from `useAuthStore.signInWithGoogle`, redirects the browser to `VITE_GOOGLE_AUTH_URL`, and relies on the protected route refresh flow after the backend redirects home.
 - Axios automatically attaches `Authorization: Bearer <accessToken>` and retries 403 responses by calling `/auth/refresh` up to 4 times, except auth endpoints.
 - Chat state lives in `useChatStore`; conversations are persisted under `chat-storage`, while messages are stored by conversation ID with `items`, `hasMore`, and `nextCursor`.
 - Socket lifecycle lives in `useSocketStore` and is connected from `App.tsx` when an access token exists.
