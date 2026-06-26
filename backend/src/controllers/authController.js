@@ -171,7 +171,13 @@ export const forgotPassword = async (req, res) => {
         try {
             await sendResetPasswordEmail(user.email, otpCode);
         } catch (mailError) {
-            console.error("Error sending reset password email:", mailError);
+            console.error("Error sending reset password email:", {
+                message: mailError.message,
+                code: mailError.code,
+                command: mailError.command,
+                responseCode: mailError.responseCode,
+                response: mailError.response,
+            });
             return res.status(500).json({ message: "Failed to send verification email" });
         }
 
@@ -216,4 +222,4 @@ export const resetPassword = async (req, res) => {
         console.error("Error in resetPassword:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
-};
+};

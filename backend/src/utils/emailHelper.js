@@ -7,18 +7,27 @@ import nodemailer from 'nodemailer';
  * @returns {Promise<any>}
  */
 export const sendResetPasswordEmail = async (toEmail, resetCode) => {
+    const smtpHost = process.env.SMTP_HOST?.trim();
+    const smtpPort = parseInt(process.env.SMTP_PORT?.trim() || '587', 10);
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpPass = process.env.SMTP_PASS?.replace(/\s/g, '');
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+        throw new Error('SMTP configuration is missing');
+    }
+
     const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587', 10),
-        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465, // true for 465, false for other ports
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: smtpUser,
+            pass: smtpPass,
         },
     });
 
     const mailOptions = {
-        from: `"Midi Chat Support" <${process.env.SMTP_USER}>`,
+        from: `"Midi Chat Support" <${smtpUser}>`,
         to: toEmail,
         subject: 'Mã xác thực khôi phục mật khẩu - Midi Chat',
         html: `
